@@ -1,0 +1,26 @@
+# room1206's weather feed: every 10 minutes, the latest AMeDAS temperatures (make_weather.py) to docs/room1206_weather.json,
+# served by GitHub Pages (Settings > Pages: Deploy from a branch, main, /docs). GitHub may run a schedule a few minutes late.
+name: weather
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: weather
+  cancel-in-progress: false
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch
+        run: python3 make_weather.py
+      - name: Commit if changed
+        run: |
+          git config user.name "weather-bot"
+          git config user.email "weather-bot@users.noreply.github.com"
+          git add docs/room1206_weather.json
+          git diff --cached --quiet || git commit -m "weather $(date -u +%Y-%m-%dT%H:%MZ)"
+          git push
